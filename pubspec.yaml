@@ -32,6 +32,10 @@ dependencies:
     sdk: flutter
   table_calendar: ^3.0.9
   intl: ^0.18.1
+  drift: ^2.13.2
+  path_provider: ^2.0.0
+  path: ^1.8.3
+  get_it: 7.2.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -47,6 +51,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+  build_runner: ^2.2.0
+  drift_dev: ^2.13.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
