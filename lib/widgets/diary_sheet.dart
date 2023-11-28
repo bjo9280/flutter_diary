@@ -43,6 +43,9 @@ class _DiarySheetState extends State<DiarySheet> {
       body: SafeArea(
         child: Column(
           children: [
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            ),
             ElevatedButton(
               child: Text("${_formattedDate(date)}"),
               onPressed: () {
