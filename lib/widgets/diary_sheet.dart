@@ -18,7 +18,7 @@ class DiarySheet extends StatefulWidget {
 class _DiarySheetState extends State<DiarySheet> {
   late DateTime date;
 
-  TextEditingController emptyController = TextEditingController();
+  TextEditingController contentController = TextEditingController();
 
   @override
   void initState() {
@@ -100,7 +100,7 @@ class _DiarySheetState extends State<DiarySheet> {
           final diaryDataList = snapshot.data ?? [];
           if (diaryDataList.isEmpty) {
             return TextFormField(
-              controller: emptyController,
+              controller: contentController,
               keyboardType: TextInputType.multiline,
               maxLines: 25,
               decoration: InputDecoration(
@@ -129,7 +129,7 @@ class _DiarySheetState extends State<DiarySheet> {
       await GetIt.I<LocalDatabase>().removeSchedule(date);
       await GetIt.I<LocalDatabase>().createSchedule(
         DiaryDbCompanion(
-          content: Value(emptyController.text),
+          content: Value(contentController.text),
           date: Value(date),
         ),
       );
@@ -171,8 +171,8 @@ class _DiarySheetState extends State<DiarySheet> {
   }
 
   TextEditingController getControllerText(text) {
-    emptyController = TextEditingController(text: text);
-    return emptyController;
+    contentController = TextEditingController(text: text);
+    return contentController;
   }
 
   String _formattedDate(DateTime date) {
