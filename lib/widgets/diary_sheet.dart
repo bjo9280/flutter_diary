@@ -1,7 +1,13 @@
 import 'package:diary/database/drift_database.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:drift/drift.dart' hide Column;
+import 'package:intl/intl.dart';
+
+import 'package:uuid/uuid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../models/diary_db_model.dart';
 
 class DiarySheet extends StatefulWidget {
   final DateTime selectedDate;
@@ -88,9 +94,58 @@ class _DiarySheetState extends State<DiarySheet> {
     }
   }
 
+  // Widget _buildDiaryEntries() {
+  //   return StreamBuilder<List<DiaryDbData>>(
+  //     stream: GetIt.I<LocalDatabase>().watchSchedules(date),
+  //     builder: (context, snapshot) {
+  //       if (snapshot.connectionState == ConnectionState.waiting) {
+  //         // Loading state
+  //         return CircularProgressIndicator();
+  //       } else if (snapshot.hasError) {
+  //         // Error state
+  //         return Text('Error: ${snapshot.error}');
+  //       } else {
+  //         // Data loaded successfully
+  //         final diaryDataList = snapshot.data ?? [];
+  //         diaryDataList.sort((a, b) => a.create.compareTo(b.create));
+  //
+  //         for (var i in diaryDataList) {
+  //           print(i);
+  //         }
+  //         if (diaryDataList.isEmpty) {
+  //           return TextFormField(
+  //             controller: contentController,
+  //             keyboardType: TextInputType.multiline,
+  //             maxLines: 25,
+  //             decoration: InputDecoration(
+  //               hintText: '입력해주세요.',
+  //               // Display hintText only if there are no entries
+  //             ),
+  //           );
+  //         } else {
+  //           return TextFormField(
+  //             controller: getControllerText(diaryDataList.last.content),
+  //             keyboardType: TextInputType.multiline,
+  //             maxLines: 25,
+  //             decoration: InputDecoration(
+  //               hintText: '입력해주세요.',
+  //               // Display hintText only if there are no entries
+  //             ),
+  //           );
+  //         }
+  //       }
+  //     },
+  //   );
+  // }
+
   Widget _buildDiaryEntries() {
-    return StreamBuilder<List<DiaryDbData>>(
-      stream: GetIt.I<LocalDatabase>().watchSchedules(date),
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('diary')
+          .where('date',
+              isEqualTo: DateFormat('yyyy-MM-dd').format(
+                  date)) // Adjust this condition based on your data model
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           // Loading state
@@ -100,7 +155,15 @@ class _DiarySheetState extends State<DiarySheet> {
           return Text('Error: ${snapshot.error}');
         } else {
           // Data loaded successfully
-          final diaryDataList = snapshot.data ?? [];
+          final diaryDataList = snapshot.data!.docs
+              .map(
+                (QueryDocumentSnapshot e) => DiaryModel.fromJson(
+                    json: (e.data() as Map<String, dynamic>)),
+              )
+              .toList();
+
+          diaryDataList.sort((a, b) => a.create.compareTo(b.create));
+
           if (diaryDataList.isEmpty) {
             return TextFormField(
               controller: contentController,
@@ -113,7 +176,7 @@ class _DiarySheetState extends State<DiarySheet> {
             );
           } else {
             return TextFormField(
-              controller: getControllerText(diaryDataList[0].content),
+              controller: getControllerText(diaryDataList.last.content),
               keyboardType: TextInputType.multiline,
               maxLines: 25,
               decoration: InputDecoration(
@@ -129,13 +192,28 @@ class _DiarySheetState extends State<DiarySheet> {
 
   void _saveDiaryEntry(DateTime date) async {
     try {
-      await GetIt.I<LocalDatabase>().removeSchedule(date);
-      await GetIt.I<LocalDatabase>().createSchedule(
-        DiaryDbCompanion(
-          content: Value(contentController.text),
-          date: Value(date),
-        ),
+      // await GetIt.I<LocalDatabase>().removeSchedule(date);
+      // await GetIt.I<LocalDatabase>().createSchedule(
+      //   DiaryDbCompanion(
+      //       content: Value(contentController.text),
+      //       date: Value(date),
+      //       create: Value(DateTime.now())),
+      // );
+
+      var diary = DiaryModel(
+        id: Uuid().v4(),
+        content: contentController.text,
+        date: date,
+        create: DateTime.now(),
       );
+      print(contentController.text);
+      await FirebaseFirestore.instance
+          .collection(
+            'diary',
+          )
+          .doc(diary.id)
+          .set(diary.toJson());
+
       print('Diary entry saved successfully.');
     } catch (e) {
       print('Failed to save diary entry: $e');
@@ -161,7 +239,8 @@ class _DiarySheetState extends State<DiarySheet> {
             TextButton(
               onPressed: () {
                 // 확인 버튼 클릭 시, 일정 삭제 후 알림창 닫기와 뒤로 가기 수행
-                GetIt.I<LocalDatabase>().removeSchedule(date);
+                // GetIt.I<LocalDatabase>().removeSchedule(date);
+                deleteDiaryEntriesByDate(date);
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
@@ -179,6 +258,23 @@ class _DiarySheetState extends State<DiarySheet> {
   }
 
   String _formattedDate(DateTime date) {
-    return "${date.year.toString()}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    return DateFormat('yyyy-MM-dd').format(date);
+  }
+
+  Future<void> deleteDiaryEntriesByDate(DateTime date) async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('diary')
+          .where('date', isEqualTo: DateFormat('yyyy-MM-dd').format(date))
+          .get();
+
+      for (QueryDocumentSnapshot document in querySnapshot.docs) {
+        await document.reference.delete();
+      }
+
+      print('Diary entries deleted successfully.');
+    } catch (e) {
+      print('Failed to delete diary entries: $e');
+    }
   }
 }

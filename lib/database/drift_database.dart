@@ -20,11 +20,15 @@ class LocalDatabase extends _$LocalDatabase {
   Stream<List<DiaryDbData>> watchSchedules(DateTime date) =>
       (select(diaryDb)..where((tbl) => tbl.date.equals(date))).watch();
 
-  Future<int> createSchedule(DiaryDbCompanion data) =>
-      into(diaryDb).insert(data);
+  Future<int> createSchedule(DiaryDbCompanion date) =>
+      into(diaryDb).insert(date);
 
   Future<int> removeSchedule(DateTime date) =>
       (delete(diaryDb)..where((tbl) => tbl.date.equals(date))).go();
+
+  Future<int> updateSchedule(DiaryDbCompanion date) =>
+      (update(diaryDb)..where((tbl) => tbl.date.equals(date.date.value)))
+          .write(date);
 }
 
 LazyDatabase _openConnection() {

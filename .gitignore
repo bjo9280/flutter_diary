@@ -1,6 +1,8 @@
 # Do not remove or rename entries in this file, only add new ones
 # See https://github.com/flutter/flutter/issues/128635 for more context.
 
+**/firebase_options.dart
+
 # Miscellaneous
 *.class
 *.lock
@@ -65,6 +67,7 @@ unlinked.ds
 unlinked_spec.ds
 
 # Android related
+**/android
 **/android/**/gradle-wrapper.jar
 .gradle/
 **/android/captures/
@@ -106,6 +109,7 @@ unlinked_spec.ds
 **/ios/Runner/GeneratedPluginRegistrant.*
 
 # macOS
+**/macos
 **/Flutter/ephemeral/
 **/Pods/
 **/macos/Flutter/GeneratedPluginRegistrant.swift
